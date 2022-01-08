@@ -1,14 +1,7 @@
 require 'roo'
 require 'roo-xls'
 require './column'
-require 'rubyXL'
-require 'rubyXL/convenience_methods'
-
-require 'rubyXL/convenience_methods/cell'
-require 'rubyXL/convenience_methods/color'
-require 'rubyXL/convenience_methods/font'
-require 'rubyXL/convenience_methods/workbook'
-require 'rubyXL/convenience_methods/worksheet'
+require 'spreadsheet'
 
 class ExcelSpreadsheet 
 
@@ -18,7 +11,7 @@ class ExcelSpreadsheet
 
     def initialize(path)
         @path = path
-        @file = Roo::Spreadsheet.open(path, {:expand_merged_ranges => true})
+        @file = Roo::Spreadsheet.open(path)
         
         @original_table = @file.to_matrix.to_a
         @table = get_table(@file.default_sheet)
@@ -34,6 +27,8 @@ class ExcelSpreadsheet
                 true
             end
         end
+
+        #Missing expand merged cells option
 
         return temp_table
     end
@@ -70,16 +65,16 @@ class ExcelSpreadsheet
             puts "Error, table headers are not equal."
         end
 
-        workbook = RubyXL::Parser.parse(@path)
-        sheet = workbook[sheet]
+        workbook = Spreadsheet.open @path
+        sheet = workbook.sheet sheet
 
         1.upto(table_2.length - 1) do |row|
             0.upto(table_2[row].length - 1) do |col|
-                sheet.add_cell(row + @file.last_row - 1, col + @file.first_column - 1, table_2[row][col])
+                sheet.rows[row + @file.last_row - 1][col + @file.first_column - 1] = table_2[row][col].to_s
             end
         end
 
-        workbook.write(@path)
+        workbook.write @path
     end
 
     def sub_tables(table_1, sheet, table_2)
@@ -103,14 +98,14 @@ class ExcelSpreadsheet
             end
         end
 
-        workbook = RubyXL::Parser.parse(@path)
-        sheet = workbook[sheet]
+        workbook = Spreadsheet.open '/path/to/an/excel-file.xls'
+        sheet = workbook.sheet sheet
 
         0.upto(rows_to_remove.length - 1) do |index|
-            sheet.delete_row(rows_to_remove[index] + @file.first_row - 1)
+            sheet.insert_row(rows_to_remove[index] + @file.first_row - 1, [])
         end
 
-        workbook.write(@path)  
+        workbook.write @path 
     end
 
 end
